@@ -958,7 +958,7 @@ body {
               <!-- Search Dropdown -->
               <div class="search-dropdown" id="searchDropdown">
                 <div class="dropdown-view" id="roofrResults">
-                  <div class="dropdown-section-label">Search results in Roofr catalog</div>
+                  <div class="dropdown-section-label" id="roofrSectionLabel">Search results in Roofr catalog</div>
                   <div class="dropdown-results" id="roofrResultsList"></div>
                   <div class="dropdown-footer">
                     <a href="#" class="footer-link" id="searchSupplierBtn">
@@ -1105,6 +1105,8 @@ var newItemRow = document.getElementById('newItemRow');
 var addedItemRow = document.getElementById('addedItemRow');
 var addedItemName = document.getElementById('addedItemName');
 var tagWrapper = document.getElementById('tagWrapper');
+var createNewBtn = document.getElementById('createNewBtn');
+var roofrSectionLabel;
 var addItemBtn = document.getElementById('addItemBtn');
 var toast = document.getElementById('toast');
 var toastMessage = document.getElementById('toastMessage');
@@ -1205,7 +1207,6 @@ function addItemToTable(name) {
     });
   });
 
-  showToast('Item saved to catalog');
 }
 
 function showToast(message) {
@@ -1217,21 +1218,24 @@ function showToast(message) {
 }
 
 // Event listeners
-searchInput.addEventListener('focus', function() {
-  if (searchInput.value.length > 0) {
+function updateDropdownForQuery() {
+  var hasQuery = searchInput.value.trim().length > 0;
+  if (hasQuery) {
     renderRoofrResults();
-    showDropdown();
-  }
-});
-
-searchInput.addEventListener('input', function() {
-  if (searchInput.value.trim().length > 0) {
-    renderRoofrResults();
-    showDropdown();
   } else {
-    hideDropdown();
+    roofrResultsList.innerHTML = '';
   }
-});
+  if (!roofrSectionLabel) {
+    roofrSectionLabel = document.getElementById('roofrSectionLabel') || document.querySelector('#roofrResults .dropdown-section-label');
+  }
+  if (roofrSectionLabel) roofrSectionLabel.style.display = hasQuery ? '' : 'none';
+  searchSupplierBtn.style.display = hasQuery ? '' : 'none';
+  showDropdown();
+}
+
+searchInput.addEventListener('focus', updateDropdownForQuery);
+searchInput.addEventListener('click', updateDropdownForQuery);
+searchInput.addEventListener('input', updateDropdownForQuery);
 
 searchSupplierBtn.addEventListener('click', function(e) {
   e.preventDefault();
@@ -1252,16 +1256,26 @@ backFromResults.addEventListener('click', function(e) {
   switchView('roofr');
 });
 
+createNewBtn.addEventListener('click', function(e) {
+  e.preventDefault();
+  var name = searchInput.value.trim() || 'New catalog item';
+  addItemToTable(name);
+});
+
 addItemBtn.addEventListener('click', function(e) {
   e.preventDefault();
+  e.stopPropagation();
   newItemRow.classList.remove('hidden');
   addedItemRow.classList.add('hidden');
   searchInput.value = '';
-  searchInput.focus();
+  setTimeout(function() {
+    searchInput.focus();
+    updateDropdownForQuery();
+  }, 0);
 });
 
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('#searchCell')) {
+  if (!e.target.closest('#searchCell') && !e.target.closest('#addItemBtn')) {
     hideDropdown();
   }
 });
